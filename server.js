@@ -5,7 +5,12 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static(__dirname));
+
+// Serve the main HTML file at root
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/study_toolkit_final.html');
+});
 
 // ── DATABASE CONNECTION ──
 const pool = new Pool({
