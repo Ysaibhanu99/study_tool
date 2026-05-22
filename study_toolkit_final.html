@@ -98,6 +98,17 @@ body{font-family:'DM Sans',sans-serif;background:#0e1a14;min-height:100vh;overfl
 .custom-row{display:flex;gap:8px;margin-top:8px;}
 .custom-row input[type=text]{flex:1;background:rgba(20,45,25,0.5);border:0.5px solid rgba(120,180,130,0.25);border-radius:8px;padding:6px 10px;color:#d4e8d0;font-size:13px;outline:none;}
 .custom-row input::placeholder{color:#4a6e50;}
+/* Custom timer */
+.custom-time-row{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.custom-time-row label{font-size:11px;color:#6a9474;text-transform:uppercase;letter-spacing:0.05em;}
+.time-input-wrap{display:flex;align-items:center;gap:4px;}
+.time-num-input{width:52px;background:rgba(20,45,25,0.6);border:0.5px solid rgba(120,180,130,0.3);border-radius:8px;padding:6px 8px;color:#d4e8d0;font-size:18px;font-family:'Lora',serif;text-align:center;outline:none;-moz-appearance:textfield;}
+.time-num-input::-webkit-inner-spin-button,.time-num-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.time-num-input:focus{border-color:rgba(120,180,130,0.6);}
+.time-sep{font-size:20px;color:#4a6e50;font-family:'Lora',serif;}
+.set-time-btn{padding:6px 14px;border-radius:8px;border:0.5px solid rgba(120,180,130,0.4);background:rgba(50,90,55,0.8);color:#d4e8d0;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all 0.15s;}
+.set-time-btn:hover{background:rgba(70,120,75,0.9);}
+.time-sublabel{font-size:10px;color:#4a6e50;text-align:center;margin-top:2px;}
 /* DB status indicator */
 .db-status{position:fixed;bottom:14px;right:16px;z-index:100;font-size:11px;padding:4px 10px;border-radius:99px;border:0.5px solid rgba(120,180,130,0.3);background:rgba(15,30,18,0.9);color:#6a9474;display:flex;align-items:center;gap:5px;transition:all 0.3s;}
 .db-status.ok{color:#4CAF7A;border-color:rgba(76,175,122,0.4);}
@@ -188,6 +199,23 @@ body{font-family:'DM Sans',sans-serif;background:#0e1a14;min-height:100vh;overfl
           <button class="mode-btn" id="mode-50" onclick="setMode(50,'Deep work')">50 min</button>
           <button class="mode-btn" id="mode-5" onclick="setMode(5,'Short break')">5 min</button>
           <button class="mode-btn" id="mode-15" onclick="setMode(15,'Long break')">15 min</button>
+          <button class="mode-btn" id="mode-custom" onclick="showCustom()">custom</button>
+        </div>
+        <!-- Custom timer input (hidden by default) -->
+        <div id="custom-timer-box" style="display:none;margin-top:10px;background:rgba(20,45,25,0.5);border:0.5px solid rgba(120,180,130,0.2);border-radius:10px;padding:10px 12px;">
+          <div class="lbl" style="margin-bottom:8px;">Set your own time</div>
+          <div class="custom-time-row">
+            <div>
+              <div class="time-input-wrap">
+                <input type="number" class="time-num-input" id="custom-hrs" min="0" max="5" value="0" placeholder="0"/>
+                <span class="time-sep">h</span>
+                <input type="number" class="time-num-input" id="custom-mins" min="1" max="59" value="30" placeholder="30"/>
+                <span class="time-sep">m</span>
+              </div>
+              <div class="time-sublabel">hours &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; minutes</div>
+            </div>
+            <button class="set-time-btn" onclick="setCustomMode()"><i class="ti ti-check"></i> Set</button>
+          </div>
         </div>
       </div>
       <div class="metric">
@@ -447,7 +475,37 @@ function toggleTimer(){
   }
 }
 function resetTimer(){clearInterval(timerInterval);running=false;remaining=totalSecs;document.getElementById('timer-display').textContent=fmt(remaining);document.getElementById('timer-bar').style.width='100%';document.getElementById('start-btn').innerHTML='<i class="ti ti-player-play"></i> Start';}
-function setMode(mins,label){clearInterval(timerInterval);running=false;totalSecs=mins*60;remaining=totalSecs;document.getElementById('session-label').textContent=label;document.getElementById('timer-display').textContent=fmt(remaining);document.getElementById('timer-bar').style.width='100%';document.getElementById('start-btn').innerHTML='<i class="ti ti-player-play"></i> Start';['25','50','5','15'].forEach(m=>document.getElementById('mode-'+m).classList.remove('active'));document.getElementById('mode-'+mins).classList.add('active');}
+function setMode(mins,label){
+  clearInterval(timerInterval);running=false;totalSecs=mins*60;remaining=totalSecs;
+  document.getElementById('session-label').textContent=label;
+  document.getElementById('timer-display').textContent=fmt(remaining);
+  document.getElementById('timer-bar').style.width='100%';
+  document.getElementById('start-btn').innerHTML='<i class="ti ti-player-play"></i> Start';
+  ['25','50','5','15','custom'].forEach(m=>document.getElementById('mode-'+m).classList.remove('active'));
+  document.getElementById('mode-'+mins).classList.add('active');
+  document.getElementById('custom-timer-box').style.display='none';
+}
+function showCustom(){
+  ['25','50','5','15','custom'].forEach(m=>document.getElementById('mode-'+m).classList.remove('active'));
+  document.getElementById('mode-custom').classList.add('active');
+  const box=document.getElementById('custom-timer-box');
+  box.style.display = box.style.display==='none' ? 'block' : 'none';
+}
+function setCustomMode(){
+  const hrs = parseInt(document.getElementById('custom-hrs').value)||0;
+  const mins = parseInt(document.getElementById('custom-mins').value)||0;
+  const total = hrs*60 + mins;
+  if(total < 1){ alert('Please set at least 1 minute!'); return; }
+  if(total > 300){ alert('Max 5 hours at a time!'); return; }
+  clearInterval(timerInterval);running=false;
+  totalSecs=total*60;remaining=totalSecs;
+  const label = hrs>0 ? `${hrs}h ${mins>0?mins+'m':''} session`.trim() : `${mins} min session`;
+  document.getElementById('session-label').textContent=label;
+  document.getElementById('timer-display').textContent=fmt(remaining);
+  document.getElementById('timer-bar').style.width='100%';
+  document.getElementById('start-btn').innerHTML='<i class="ti ti-player-play"></i> Start';
+  document.getElementById('custom-timer-box').style.display='none';
+}
 
 function switchTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');document.getElementById('panel-'+name).classList.add('active');}
 
