@@ -8,11 +8,19 @@ its called **Study Sanctuary** and it actually helps me sit down and study witho
 
 ## what it does
 
-- **focus timer** — pomodoro style. 25 min focus, 5 min break, 50 min deep work. you can set a goal for each session so you actually know what you're supposed to be doing
+- **focus timer** — pomodoro style. 25 min focus, 5 min break, 50 min deep work. plus i added a **custom timer** where you can enter hours & minutes yourself if you want a custom study session. you can set a goal for each session so you actually know what you're supposed to be doing
+- **study planner** — a whole new planner tab where you can add tasks with specific start and end times, color labels, and even sub-tasks (if you're like me and need to break things down to actually do them). it has filters for today, all, pending, and completed tasks
 - **priority matrix** — drag tasks into "do now", "schedule", "delegate", or "drop". basically eisenhower matrix stuff we learned about but actually useful
-- **checklist** — morning routine, study ritual, evening wind down. you can add your own stuff too
+- **music player** — you can load a whole folder of your own mp3 songs and play them all in a row! has playlist view, shuffle, repeat, and volume/seek controls. super clean.
 - **ambient sounds** — rain, forest, fireplace, ocean waves, white noise, brown noise, wind. all generated in the browser, no downloads needed
-- **session log** — tracks every session you complete with the time and what your goal was
+- **deadline tracker & calendar** — keep track of upcoming exams or assignments with a countdown timer so you don't forget (under the plan tab)
+- **xp & leveling system** — you earn experience points (xp) for every minute you study! start as a "Seedling" and level up all the way to "Master" 
+- **streak & daily goals** — tracks your study streak in days and lets you set a daily study goal (like 2 hours). there is a progress ring that fills up as you study
+- **weekly stats graph** — a visual chart that shows how many minutes you studied each day of the week, so you can feel good about yourself (or guilty lol)
+- **subject tags** — tag your study sessions (e.g. math, cs, history) to track where your time is going
+- **themes** — 4 different aesthetics (Night Forest, Dawn, Rainy Day, Ocean) to match your vibe
+- **checklist** — morning routine, study ritual, evening wind down. you can add your own stuff too
+- **session log** — tracks every session you complete with the time, subject tag, and what your goal was
 
 everything saves to a real database so it doesn't disappear when you close the tab (learned that the hard way)
 
@@ -60,10 +68,9 @@ also this was a good way to learn how to connect a frontend to a real database s
 
 ## stuff i might add later
 
-- streak tracking
-- subject tags for sessions
-- dark/light mode toggle
-- maybe a notes section idk
+- maybe integration with google calendar idk
+- a flashcard / spaced repetition helper
+- pomodoro group chats / study rooms with friends
 
 ---
 
