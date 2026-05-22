@@ -222,6 +222,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;over
 .theme-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.15s;position:relative;}
 .theme-dot:hover{transform:scale(1.15);}
 .theme-dot.active{border-color:white;}
+/* Music Player */
+.music-drop-zone{border:1.5px dashed var(--card-border);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:10px;}
+.music-drop-zone:hover{border-color:var(--accent);background:rgba(255,255,255,0.03);}
+.music-drop-zone i{font-size:28px;color:var(--text-faint);display:block;margin-bottom:6px;}
+.music-drop-zone span{font-size:13px;color:var(--text-faint);}
+.music-drop-zone.has-songs{border-style:solid;border-color:var(--accent);}
+.music-now-playing{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;min-height:18px;}
+.music-prog-wrap{height:4px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;margin-bottom:10px;cursor:pointer;}
+.music-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.3s linear;}
+.music-controls{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;}
+.mc-btn{width:36px;height:36px;border-radius:50%;border:0.5px solid var(--card-border);background:rgba(0,0,0,0.3);color:var(--text-dim);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
+.mc-btn:hover{color:var(--text);background:rgba(255,255,255,0.07);}
+.mc-btn.active{color:var(--accent);border-color:var(--accent);}
+.mc-play{width:44px;height:44px;font-size:20px;border-color:var(--accent);color:var(--accent);}
+.music-vol-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.music-vol-row label{font-size:11px;color:var(--text-faint);display:flex;align-items:center;gap:4px;}
+.music-vol-row input[type=range]{flex:1;accent-color:var(--accent);}
+.music-queue{max-height:140px;overflow-y:auto;margin-top:10px;}
+.music-queue::-webkit-scrollbar{width:4px;}
+.music-queue::-webkit-scrollbar-track{background:transparent;}
+.music-queue::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:99px;}
+.queue-item{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;cursor:pointer;transition:background 0.15s;font-size:12px;color:var(--text-dim);}
+.queue-item:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+.queue-item.playing{background:rgba(76,175,122,0.12);color:var(--accent2);}
+.queue-num{width:18px;text-align:right;color:var(--text-faint);font-size:11px;flex-shrink:0;}
+.queue-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* DB status */
 .db-status{position:fixed;bottom:14px;right:16px;z-index:100;font-size:11px;padding:4px 10px;border-radius:99px;border:0.5px solid var(--card-border);background:rgba(0,0,0,0.6);color:var(--text-dim);display:flex;align-items:center;gap:5px;transition:all 0.3s;backdrop-filter:blur(4px);}
 .db-status.ok{color:var(--accent);}
@@ -406,6 +432,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;over
         <input type="range" min="0" max="100" value="40" id="vol-slider" oninput="setVolume(this.value)"/>
         <span class="vol-val" id="vol-val">40%</span>
       </div>
+    </div>
+  </div>
+
+
+    <!-- MUSIC PLAYER -->
+    <div class="card">
+      <div class="lbl" style="margin-bottom:10px;"><i class="ti ti-music" style="margin-right:6px;"></i>Music player <span id="music-count" style="color:var(--text-faint);font-size:11px;"></span></div>
+      <div class="music-drop-zone" id="music-drop-zone" onclick="document.getElementById('music-file-input').click()">
+        <i class="ti ti-folder-music"></i>
+        <span>Click to pick a folder or select MP3 files</span>
+      </div>
+      <input type="file" id="music-file-input" multiple accept="audio/*" webkitdirectory style="display:none" onchange="loadMusicFiles(this.files)"/>
+      <div class="music-now-playing" id="music-title">No song loaded</div>
+      <div class="music-prog-wrap" id="music-prog-wrap" onclick="seekMusic(event)">
+        <div class="music-prog-fill" id="music-prog" style="width:0%"></div>
+      </div>
+      <div class="music-controls">
+        <button class="mc-btn" id="shuffle-btn" onclick="toggleShuffle()" title="Shuffle"><i class="ti ti-arrows-shuffle"></i></button>
+        <button class="mc-btn" onclick="prevSong()" title="Previous"><i class="ti ti-player-skip-back"></i></button>
+        <button class="mc-btn mc-play" id="music-play-btn" onclick="toggleMusic()"><i class="ti ti-player-play"></i></button>
+        <button class="mc-btn" onclick="nextSong()" title="Next"><i class="ti ti-player-skip-forward"></i></button>
+        <button class="mc-btn" id="repeat-btn" onclick="toggleRepeat()" title="Repeat"><i class="ti ti-repeat"></i></button>
+      </div>
+      <div class="music-vol-row">
+        <label><i class="ti ti-volume"></i> Vol</label>
+        <input type="range" min="0" max="100" value="70" id="music-vol" oninput="setMusicVol(this.value)"/>
+        <span style="font-size:11px;color:var(--accent2);min-width:30px;" id="music-vol-val">70%</span>
+      </div>
+      <div class="music-queue" id="music-queue"></div>
     </div>
   </div>
 
@@ -1020,6 +1075,76 @@ loadDeadlines();
 // Set default date for deadline input to today
 const today=new Date();today.setDate(today.getDate()+7);
 document.getElementById('dl-date').value=today.toISOString().split('T')[0];
+
+// MUSIC PLAYER
+let playlist=[],currentIdx=0,musicPlaying=false,shuffleOn=false,repeatOn=false,shuffleOrder=[];
+const audio=new Audio();audio.volume=0.7;
+audio.addEventListener('timeupdate',function(){if(!audio.duration)return;document.getElementById('music-prog').style.width=((audio.currentTime/audio.duration)*100)+'%';});
+audio.addEventListener('ended',function(){nextSong();});
+function cleanName(f){return f.replace(/.[^/.]+$/,'').replace(/[-_]/g,' ');}
+function loadMusicFiles(files){
+  playlist.forEach(function(s){URL.revokeObjectURL(s.url);});playlist=[];
+  var ext=/.(mp3|wav|ogg|m4a|flac|aac|opus)$/i;
+  var sorted=Array.from(files).filter(function(f){return ext.test(f.name);}).sort(function(a,b){return a.name.localeCompare(b.name);});
+  if(!sorted.length){alert('No audio files found!');return;}
+  sorted.forEach(function(f){playlist.push({name:cleanName(f.name),url:URL.createObjectURL(f)});});
+  document.getElementById('music-count').textContent='· '+playlist.length+' songs';
+  var zone=document.getElementById('music-drop-zone');
+  zone.classList.add('has-songs');
+  zone.innerHTML='<i class="ti ti-check" style="color:var(--accent)"></i><span>'+playlist.length+' songs loaded - click to change</span>';
+  shuffleOrder=Array.from({length:playlist.length},function(_,i){return i;});
+  currentIdx=0;playSong(0);renderQueue();
+}
+function playSong(idx){
+  if(!playlist.length)return;
+  currentIdx=idx;audio.src=playlist[idx].url;audio.play();musicPlaying=true;
+  document.getElementById('music-play-btn').innerHTML='<i class="ti ti-player-pause"></i>';
+  document.getElementById('music-title').textContent='♪ '+playlist[idx].name;
+  renderQueue();
+}
+function toggleMusic(){
+  if(!playlist.length)return;
+  if(musicPlaying){audio.pause();musicPlaying=false;document.getElementById('music-play-btn').innerHTML='<i class="ti ti-player-play"></i>';}
+  else{if(!audio.src)playSong(currentIdx);else{audio.play();musicPlaying=true;document.getElementById('music-play-btn').innerHTML='<i class="ti ti-player-pause"></i>';}}
+}
+function nextSong(){
+  if(!playlist.length)return;
+  if(repeatOn){audio.currentTime=0;audio.play();return;}
+  var next=shuffleOn?shuffleOrder[(shuffleOrder.indexOf(currentIdx)+1)%shuffleOrder.length]:(currentIdx+1)%playlist.length;
+  playSong(next);
+}
+function prevSong(){
+  if(!playlist.length)return;
+  if(audio.currentTime>3){audio.currentTime=0;return;}
+  var prev=shuffleOn?shuffleOrder[(shuffleOrder.indexOf(currentIdx)-1+shuffleOrder.length)%shuffleOrder.length]:(currentIdx-1+playlist.length)%playlist.length;
+  playSong(prev);
+}
+function toggleShuffle(){
+  shuffleOn=!shuffleOn;
+  if(shuffleOn){
+    shuffleOrder=Array.from({length:playlist.length},function(_,i){return i;});
+    for(var i=shuffleOrder.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=shuffleOrder[i];shuffleOrder[i]=shuffleOrder[j];shuffleOrder[j]=t;}
+  }
+  document.getElementById('shuffle-btn').classList.toggle('active',shuffleOn);
+}
+function toggleRepeat(){repeatOn=!repeatOn;document.getElementById('repeat-btn').classList.toggle('active',repeatOn);}
+function setMusicVol(v){audio.volume=v/100;document.getElementById('music-vol-val').textContent=v+'%';}
+function seekMusic(e){
+  if(!audio.duration)return;
+  var r=document.getElementById('music-prog-wrap').getBoundingClientRect();
+  audio.currentTime=((e.clientX-r.left)/r.width)*audio.duration;
+}
+function renderQueue(){
+  var el=document.getElementById('music-queue');
+  if(!playlist.length){el.innerHTML='';return;}
+  el.innerHTML=playlist.map(function(s,i){
+    return '<div class="queue-item '+(i===currentIdx?'playing':'')+'" onclick="playSong('+i+')">'
+      +'<span class="queue-num">'+(i+1)+'</span>'
+      +'<span class="queue-name">'+(i===currentIdx?'&#9654; ':'')+s.name+'</span></div>';
+  }).join('');
+  var a=el.querySelector('.playing');if(a)a.scrollIntoView({block:'nearest'});
+}
+
 </script>
 </body>
 </html>
