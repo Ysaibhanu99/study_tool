@@ -222,6 +222,48 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;over
 .theme-dot{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.15s;position:relative;}
 .theme-dot:hover{transform:scale(1.15);}
 .theme-dot.active{border-color:white;}
+
+/* Study Planner */
+.plan-card{background:var(--card-bg);border:0.5px solid var(--card-border);border-radius:14px;padding:1rem 1.1rem;margin-bottom:10px;backdrop-filter:blur(4px);border-left:3px solid var(--plan-color,var(--accent));}
+.plan-card.done-card{opacity:0.55;}
+.plan-header{display:flex;align-items:flex-start;gap:10px;}
+.plan-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--card-border);background:transparent;cursor:pointer;flex-shrink:0;margin-top:2px;accent-color:var(--accent);}
+.plan-info{flex:1;min-width:0;}
+.plan-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.plan-card.done-card .plan-title{text-decoration:line-through;color:var(--text-faint);}
+.plan-time{font-size:11px;color:var(--text-faint);display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.plan-time i{font-size:13px;}
+.plan-duration{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--metric-bg);color:var(--text-dim);}
+.plan-prog{height:3px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+.plan-prog-fill{height:100%;border-radius:99px;transition:width 0.4s ease;}
+.plan-actions{display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;}
+.plan-del-btn{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;}
+.plan-del-btn:hover{color:#e8a098;}
+.plan-toggle{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:2px 4px;transition:transform 0.2s;}
+.plan-toggle.open{transform:rotate(180deg);}
+.subtasks-area{margin-top:6px;padding-left:28px;}
+.subtask-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,0.05);}
+.subtask-row:last-child{border-bottom:none;}
+.subtask-cb{width:15px;height:15px;border-radius:4px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.subtask-text{font-size:13px;color:var(--text-dim);flex:1;}
+.subtask-text.done{text-decoration:line-through;color:var(--text-faint);}
+.subtask-del{background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:13px;padding:0 2px;}
+.subtask-del:hover{color:#e8a098;}
+.add-subtask-row{display:flex;gap:6px;margin-top:8px;padding-left:28px;}
+.add-subtask-inp{flex:1;background:var(--input-bg);border:0.5px solid var(--card-border);border-radius:8px;padding:5px 10px;color:var(--text);font-size:12px;outline:none;}
+.add-subtask-inp::placeholder{color:var(--text-faint);}
+.add-subtask-inp:focus{border-color:var(--accent);}
+.add-subtask-btn{padding:5px 10px;border-radius:8px;border:0.5px solid var(--accent);background:var(--tab-active-bg);color:var(--text);font-size:12px;cursor:pointer;}
+.plan-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.plan-inp{width:100%;background:var(--input-bg);border:0.5px solid var(--card-border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;}
+.plan-inp::placeholder{color:var(--text-faint);}
+.plan-inp:focus{border-color:var(--accent);}
+.plan-date-group{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+.color-dots{display:flex;gap:6px;margin-bottom:12px;}
+.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform 0.15s;}
+.color-dot:hover{transform:scale(1.2);}
+.color-dot.sel{border-color:white;}
+.today-badge{font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(76,175,122,0.2);color:var(--accent);margin-left:auto;}
 /* Music Player */
 .music-drop-zone{border:1.5px dashed var(--card-border);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:10px;}
 .music-drop-zone:hover{border-color:var(--accent);background:rgba(255,255,255,0.03);}
@@ -328,6 +370,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;over
     <button class="tab" onclick="switchTab('checklist')"><i class="ti ti-checkbox"></i> Checklist</button>
     <button class="tab" onclick="switchTab('stats')"><i class="ti ti-chart-bar"></i> Stats</button>
     <button class="tab" onclick="switchTab('plan')"><i class="ti ti-calendar-due"></i> Plan</button>
+    <button class="tab" onclick="switchTab('planner')"><i class="ti ti-checklist"></i> Planner</button>
     <button class="tab" onclick="switchTab('tips')"><i class="ti ti-bulb"></i> Tips</button>
     <button class="tab" onclick="switchTab('log')"><i class="ti ti-list-check"></i> Log</button>
   </div>
@@ -588,6 +631,54 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;over
       <div class="section-title" style="margin-bottom:10px;"><i class="ti ti-clock" style="margin-right:6px;"></i>Upcoming deadlines</div>
       <div id="deadline-list"><div style="font-size:13px;color:var(--text-faint);padding:8px 0;">No deadlines yet. Add one above!</div></div>
     </div>
+  </div>
+
+
+  <!-- STUDY PLANNER -->
+  <div id="panel-planner" class="panel">
+    <!-- Add Task Form -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:12px;"><i class="ti ti-plus" style="margin-right:6px;"></i>Add study task</div>
+      <input type="text" class="plan-inp" id="plan-title-inp" placeholder="Task title e.g. Revise Chapter 5, Solve past papers…" style="margin-bottom:8px;"/>
+      <div class="plan-form-grid">
+        <div>
+          <div class="lbl" style="margin-bottom:4px;">Start time</div>
+          <input type="time" class="plan-inp" id="plan-start"/>
+        </div>
+        <div>
+          <div class="lbl" style="margin-bottom:4px;">End time</div>
+          <input type="time" class="plan-inp" id="plan-end"/>
+        </div>
+      </div>
+      <div class="plan-date-group">
+        <div>
+          <div class="lbl" style="margin-bottom:4px;">Date</div>
+          <input type="date" class="plan-inp" id="plan-date" style="width:auto;"/>
+        </div>
+      </div>
+      <div class="lbl" style="margin-bottom:6px;">Color label</div>
+      <div class="color-dots" id="color-dots">
+        <div class="color-dot sel" style="background:#4CAF7A;" data-color="#4CAF7A" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#4488cc;" data-color="#4488cc" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#d4a843;" data-color="#d4a843" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#c05050;" data-color="#c05050" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#9060cc;" data-color="#9060cc" onclick="selectColor(this)"></div>
+        <div class="color-dot" style="background:#20b0b0;" data-color="#20b0b0" onclick="selectColor(this)"></div>
+      </div>
+      <button class="add-btn" style="width:100%;" onclick="addPlan()"><i class="ti ti-plus"></i> Add task</button>
+    </div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+      <button class="mode-btn active" id="pf-today" onclick="setPlanFilter('today',this)">Today</button>
+      <button class="mode-btn" id="pf-all" onclick="setPlanFilter('all',this)">All</button>
+      <button class="mode-btn" id="pf-pending" onclick="setPlanFilter('pending',this)">Pending</button>
+      <button class="mode-btn" id="pf-done" onclick="setPlanFilter('done',this)">Done</button>
+      <span class="today-badge" id="planner-summary"></span>
+    </div>
+
+    <!-- Task list -->
+    <div id="plan-list"><div style="font-size:13px;color:var(--text-faint);padding:10px 0;text-align:center;">No tasks yet — add one above!</div></div>
   </div>
 
   <!-- TIPS -->
@@ -940,6 +1031,7 @@ function switchTab(name){
   document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
   document.getElementById('panel-'+name).classList.add('active');
   if(name==='stats'){loadStreak();loadWeeklyGraph();loadSubjectBreakdown();}
+  if(name==='planner'){renderPlans();}
 }
 
 // ── PRIORITY MATRIX ──
@@ -1075,6 +1167,195 @@ loadDeadlines();
 // Set default date for deadline input to today
 const today=new Date();today.setDate(today.getDate()+7);
 document.getElementById('dl-date').value=today.toISOString().split('T')[0];
+// Planner defaults
+document.getElementById('plan-date').value=new Date().toISOString().split('T')[0];
+const nowH=String(new Date().getHours()).padStart(2,'0');
+const nowM=String(new Date().getMinutes()).padStart(2,'0');
+document.getElementById('plan-start').value=nowH+':'+nowM;
+const endH=String((new Date().getHours()+1)%24).padStart(2,'0');
+document.getElementById('plan-end').value=endH+':'+nowM;
+loadPlans();
+
+
+// ── STUDY PLANNER ──
+let plans = [];
+let planFilter = 'today';
+let selectedColor = '#4CAF7A';
+
+function selectColor(el) {
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedColor = el.dataset.color;
+}
+
+async function loadPlans() {
+  try {
+    const r = await fetch(API + '/plans');
+    plans = await r.json();
+    renderPlans();
+  } catch(e) {}
+}
+
+function setPlanFilter(f, btn) {
+  planFilter = f;
+  document.querySelectorAll('#panel-planner .mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPlans();
+}
+
+function calcDuration(start, end) {
+  if (!start || !end) return '';
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  const mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins <= 0) return '';
+  return mins >= 60 ? Math.floor(mins/60) + 'h ' + (mins%60 ? mins%60+'m' : '') : mins + 'm';
+}
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function renderPlans() {
+  const el = document.getElementById('plan-list');
+  let filtered = [...plans];
+  if (planFilter === 'today') filtered = filtered.filter(p => p.date === todayStr());
+  else if (planFilter === 'pending') filtered = filtered.filter(p => !p.is_done);
+  else if (planFilter === 'done') filtered = filtered.filter(p => p.is_done);
+
+  // Summary
+  const today = plans.filter(p => p.date === todayStr());
+  const done = today.filter(p => p.is_done).length;
+  document.getElementById('planner-summary').textContent = today.length ? done + '/' + today.length + ' done today' : '';
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text-faint);padding:10px 0;text-align:center;">No tasks here yet!</div>';
+    return;
+  }
+
+  el.innerHTML = '';
+  filtered.forEach(plan => {
+    const subtasksDone = plan.subtasks.filter(s => s.is_done).length;
+    const subtasksTotal = plan.subtasks.length;
+    const progPct = subtasksTotal ? Math.round((subtasksDone / subtasksTotal) * 100) : (plan.is_done ? 100 : 0);
+    const dur = calcDuration(plan.start_time, plan.end_time);
+
+    const div = document.createElement('div');
+    div.className = 'plan-card' + (plan.is_done ? ' done-card' : '');
+    div.style.setProperty('--plan-color', plan.color || 'var(--accent)');
+    div.innerHTML = `
+      <div class="plan-header">
+        <input type="checkbox" class="plan-check" ${plan.is_done ? 'checked' : ''} onchange="togglePlan(${plan.id}, this.checked)"/>
+        <div class="plan-info">
+          <div class="plan-title">${plan.title}</div>
+          <div class="plan-time">
+            <i class="ti ti-clock"></i>
+            ${plan.start_time} → ${plan.end_time}
+            ${dur ? '<span class="plan-duration">' + dur + '</span>' : ''}
+          </div>
+          ${subtasksTotal ? `<div class="plan-prog"><div class="plan-prog-fill" style="width:${progPct}%;background:${plan.color || 'var(--accent)'}"></div></div>` : ''}
+        </div>
+        <div class="plan-actions">
+          <button class="plan-toggle" id="ptoggle-${plan.id}" onclick="toggleSubtasks(${plan.id})" title="Show subtasks"><i class="ti ti-chevron-down"></i></button>
+          <button class="plan-del-btn" onclick="deletePlan(${plan.id})">×</button>
+        </div>
+      </div>
+      <div class="subtasks-area" id="subs-${plan.id}" style="display:none;">
+        ${plan.subtasks.map(s => `
+          <div class="subtask-row" id="sub-row-${s.id}">
+            <input type="checkbox" class="subtask-cb" ${s.is_done ? 'checked' : ''} onchange="toggleSubtask(${s.id}, ${plan.id}, this.checked)"/>
+            <span class="subtask-text ${s.is_done ? 'done' : ''}">${s.text}</span>
+            <button class="subtask-del" onclick="deleteSubtask(${s.id}, ${plan.id})">×</button>
+          </div>
+        `).join('')}
+        <div class="add-subtask-row">
+          <input type="text" class="add-subtask-inp" id="sub-inp-${plan.id}" placeholder="Add sub-task…" onkeydown="if(event.key==='Enter') addSubtask(${plan.id})"/>
+          <button class="add-subtask-btn" onclick="addSubtask(${plan.id})"><i class="ti ti-plus"></i></button>
+        </div>
+      </div>
+    `;
+    el.appendChild(div);
+
+    // Auto-expand if has subtasks
+    if (plan.subtasks.length > 0) {
+      document.getElementById('subs-' + plan.id).style.display = 'block';
+      document.getElementById('ptoggle-' + plan.id).classList.add('open');
+    }
+  });
+}
+
+function toggleSubtasks(planId) {
+  const area = document.getElementById('subs-' + planId);
+  const btn = document.getElementById('ptoggle-' + planId);
+  const isOpen = area.style.display !== 'none';
+  area.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('open', !isOpen);
+}
+
+async function addPlan() {
+  const title = document.getElementById('plan-title-inp').value.trim();
+  const start_time = document.getElementById('plan-start').value;
+  const end_time = document.getElementById('plan-end').value;
+  const date = document.getElementById('plan-date').value || todayStr();
+  if (!title || !start_time || !end_time) { alert('Please fill in title, start time and end time!'); return; }
+  try {
+    const r = await fetch(API + '/plans', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, start_time, end_time, date, color: selectedColor }) });
+    const plan = await r.json();
+    plans.unshift(plan);
+    renderPlans();
+    document.getElementById('plan-title-inp').value = '';
+  } catch(e) {}
+}
+
+async function togglePlan(id, done) {
+  try {
+    await fetch(API + '/plans/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ is_done: done }) });
+    const p = plans.find(p => p.id === id);
+    if (p) p.is_done = done;
+    renderPlans();
+  } catch(e) {}
+}
+
+async function deletePlan(id) {
+  try {
+    await fetch(API + '/plans/' + id, { method: 'DELETE' });
+    plans = plans.filter(p => p.id !== id);
+    renderPlans();
+  } catch(e) {}
+}
+
+async function addSubtask(planId) {
+  const inp = document.getElementById('sub-inp-' + planId);
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  try {
+    const r = await fetch(API + '/plans/' + planId + '/subtasks', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ text }) });
+    const sub = await r.json();
+    const plan = plans.find(p => p.id === planId);
+    if (plan) { plan.subtasks.push(sub); renderPlans(); }
+  } catch(e) {}
+}
+
+async function toggleSubtask(subId, planId, done) {
+  try {
+    await fetch(API + '/subtasks/' + subId, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ is_done: done }) });
+    const plan = plans.find(p => p.id === planId);
+    if (plan) {
+      const sub = plan.subtasks.find(s => s.id === subId);
+      if (sub) sub.is_done = done;
+      renderPlans();
+    }
+  } catch(e) {}
+}
+
+async function deleteSubtask(subId, planId) {
+  try {
+    await fetch(API + '/subtasks/' + subId, { method: 'DELETE' });
+    const plan = plans.find(p => p.id === planId);
+    if (plan) { plan.subtasks = plan.subtasks.filter(s => s.id !== subId); renderPlans(); }
+  } catch(e) {}
+}
 
 // MUSIC PLAYER
 let playlist=[],currentIdx=0,musicPlaying=false,shuffleOn=false,repeatOn=false,shuffleOrder=[];

@@ -57,6 +57,26 @@ async function initDB() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
+    
+    CREATE TABLE IF NOT EXISTS study_plans (
+      id         SERIAL PRIMARY KEY,
+      title      TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      end_time   TEXT NOT NULL,
+      date       DATE DEFAULT CURRENT_DATE,
+      is_done    BOOLEAN DEFAULT FALSE,
+      color      TEXT DEFAULT '#4CAF7A',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS plan_subtasks (
+      id         SERIAL PRIMARY KEY,
+      plan_id    INTEGER NOT NULL REFERENCES study_plans(id) ON DELETE CASCADE,
+      text       TEXT NOT NULL,
+      is_done    BOOLEAN DEFAULT FALSE,
+      sort_order INTEGER DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
     CREATE TABLE IF NOT EXISTS app_state (
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
@@ -291,6 +311,83 @@ app.post('/api/deadlines', async (req, res) => {
 app.delete('/api/deadlines/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM deadlines WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
+// ═══════════════════════════════════════
+// STUDY PLANS API
+// ═══════════════════════════════════════
+
+// Get all plans with their subtasks
+app.get('/api/plans', async (req, res) => {
+  try {
+    const plans = await pool.query('SELECT * FROM study_plans ORDER BY date DESC, start_time ASC');
+    const subtasks = await pool.query('SELECT * FROM plan_subtasks ORDER BY sort_order, created_at');
+    const result = plans.rows.map(p => ({
+      ...p,
+      subtasks: subtasks.rows.filter(s => s.plan_id === p.id)
+    }));
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/plans', async (req, res) => {
+  const { title, start_time, end_time, date, color } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO study_plans (title, start_time, end_time, date, color) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [title, start_time, end_time, date || new Date().toISOString().split('T')[0], color || '#4CAF7A']
+    );
+    res.json({ ...result.rows[0], subtasks: [] });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/plans/:id', async (req, res) => {
+  const { is_done } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE study_plans SET is_done = $1 WHERE id = $2 RETURNING *',
+      [is_done, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/plans/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM study_plans WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Subtasks
+app.post('/api/plans/:id/subtasks', async (req, res) => {
+  const { text } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO plan_subtasks (plan_id, text) VALUES ($1, $2) RETURNING *',
+      [req.params.id, text]
+    );
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch('/api/subtasks/:id', async (req, res) => {
+  const { is_done } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE plan_subtasks SET is_done = $1 WHERE id = $2 RETURNING *',
+      [is_done, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/subtasks/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM plan_subtasks WHERE id = $1', [req.params.id]);
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
