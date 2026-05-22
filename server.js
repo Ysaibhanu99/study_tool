@@ -1,6 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -9,7 +10,7 @@ app.use(express.static(__dirname));
 
 // Serve the main HTML file at root
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/study_toolkit_final.html');
+  res.sendFile(path.join(__dirname, 'study_toolkit_final.html'));
 });
 
 // ── DATABASE CONNECTION ──
@@ -22,11 +23,12 @@ const pool = new Pool({
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS sessions (
-      id        SERIAL PRIMARY KEY,
-      time_str  TEXT NOT NULL,
-      label     TEXT NOT NULL,
-      mins      INTEGER NOT NULL,
-      goal      TEXT,
+      id         SERIAL PRIMARY KEY,
+      time_str   TEXT NOT NULL,
+      label      TEXT NOT NULL,
+      mins       INTEGER NOT NULL,
+      goal       TEXT,
+      subject    TEXT DEFAULT '',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
@@ -47,10 +49,23 @@ async function initDB() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS deadlines (
+      id         SERIAL PRIMARY KEY,
+      title      TEXT NOT NULL,
+      subject    TEXT DEFAULT '',
+      due_date   DATE NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS app_state (
       key   TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+  `);
+
+  // Add subject column to sessions if it doesn't exist (migration)
+  await pool.query(`
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS subject TEXT DEFAULT '';
   `);
 
   // Seed default checklist items if table is empty
@@ -87,7 +102,6 @@ async function initDB() {
     }
     console.log('✅ Default checklist items seeded');
   }
-
   console.log('✅ Database tables ready');
 }
 
@@ -95,99 +109,127 @@ async function initDB() {
 // SESSIONS API
 // ═══════════════════════════════════════
 
-// GET all sessions (today's)
 app.get('/api/sessions', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM sessions WHERE created_at >= NOW() - INTERVAL '24 hours' ORDER BY created_at DESC`
     );
     res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST new session
+// Weekly sessions grouped by day (last 7 days)
+app.get('/api/sessions/weekly', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        DATE(created_at AT TIME ZONE 'Asia/Kolkata') AS day,
+        SUM(mins) AS total_mins,
+        COUNT(*) AS session_count
+      FROM sessions
+      WHERE created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY DATE(created_at AT TIME ZONE 'Asia/Kolkata')
+      ORDER BY day ASC
+    `);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Streak: count consecutive days with at least 1 session
+app.get('/api/sessions/streak', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT DATE(created_at AT TIME ZONE 'Asia/Kolkata') AS day
+      FROM sessions
+      ORDER BY day DESC
+    `);
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    for (let i = 0; i < result.rows.length; i++) {
+      const day = new Date(result.rows[i].day);
+      const expected = new Date(today);
+      expected.setDate(today.getDate() - i);
+      if (day.toDateString() === expected.toDateString()) {
+        streak++;
+      } else break;
+    }
+    res.json({ streak });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Subject breakdown
+app.get('/api/sessions/subjects', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT subject, SUM(mins) AS total_mins, COUNT(*) AS sessions
+      FROM sessions
+      WHERE subject != '' AND subject IS NOT NULL
+        AND created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY subject
+      ORDER BY total_mins DESC
+    `);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.post('/api/sessions', async (req, res) => {
-  const { time_str, label, mins, goal } = req.body;
+  const { time_str, label, mins, goal, subject } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO sessions (time_str, label, mins, goal) VALUES ($1, $2, $3, $4) RETURNING *',
-      [time_str, label, mins, goal || '']
+      'INSERT INTO sessions (time_str, label, mins, goal, subject) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [time_str, label, mins, goal || '', subject || '']
     );
     res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE all sessions (clear log)
 app.delete('/api/sessions', async (req, res) => {
   try {
     await pool.query('DELETE FROM sessions');
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ═══════════════════════════════════════
 // TASKS API
 // ═══════════════════════════════════════
 
-// GET all tasks
 app.get('/api/tasks', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM tasks ORDER BY created_at ASC');
     res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST new task
 app.post('/api/tasks', async (req, res) => {
   const { text, quad } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO tasks (text, quad) VALUES ($1, $2) RETURNING *',
-      [text, quad]
+      'INSERT INTO tasks (text, quad) VALUES ($1, $2) RETURNING *', [text, quad]
     );
     res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE a task by id
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM tasks WHERE id = $1', [req.params.id]);
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ═══════════════════════════════════════
 // CHECKLIST API
 // ═══════════════════════════════════════
 
-// GET all checklist items
 app.get('/api/checklist', async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT * FROM checklist_items ORDER BY section, sort_order, created_at'
-    );
+    const result = await pool.query('SELECT * FROM checklist_items ORDER BY section, sort_order, created_at');
     res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST custom checklist item
 app.post('/api/checklist', async (req, res) => {
   const { section, text } = req.body;
   try {
@@ -196,12 +238,9 @@ app.post('/api/checklist', async (req, res) => {
       [section, text]
     );
     res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// PATCH checklist item (toggle checked)
 app.patch('/api/checklist/:id', async (req, res) => {
   const { is_checked } = req.body;
   try {
@@ -210,42 +249,61 @@ app.patch('/api/checklist/:id', async (req, res) => {
       [is_checked, req.params.id]
     );
     res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// DELETE custom checklist item
 app.delete('/api/checklist/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM checklist_items WHERE id = $1 AND is_custom = TRUE', [req.params.id]);
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// POST reset all checks for a new day
 app.post('/api/checklist/reset', async (req, res) => {
   try {
     await pool.query('UPDATE checklist_items SET is_checked = FALSE');
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ═══════════════════════════════════════
-// APP STATE (session count / streak)
+// DEADLINES API
+// ═══════════════════════════════════════
+
+app.get('/api/deadlines', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM deadlines ORDER BY due_date ASC');
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/deadlines', async (req, res) => {
+  const { title, subject, due_date } = req.body;
+  try {
+    const result = await pool.query(
+      'INSERT INTO deadlines (title, subject, due_date) VALUES ($1, $2, $3) RETURNING *',
+      [title, subject || '', due_date]
+    );
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/deadlines/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM deadlines WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ═══════════════════════════════════════
+// APP STATE
 // ═══════════════════════════════════════
 
 app.get('/api/state/:key', async (req, res) => {
   try {
     const result = await pool.query('SELECT value FROM app_state WHERE key = $1', [req.params.key]);
     res.json({ value: result.rows[0]?.value ?? null });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/state/:key', async (req, res) => {
@@ -256,17 +314,14 @@ app.post('/api/state/:key', async (req, res) => {
       [req.params.key, value]
     );
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── START ──
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 initDB().then(() => {
   app.listen(PORT, () => {
     console.log(`🌿 Study Sanctuary API running at http://localhost:${PORT}`);
-    console.log(`   Open: http://localhost:${PORT}/study_toolkit_final.html`);
   });
 }).catch(err => {
   console.error('❌ Failed to connect to database:', err.message);
