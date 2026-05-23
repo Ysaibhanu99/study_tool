@@ -191,12 +191,22 @@ app.get('/api/sessions/streak', async (req, res) => {
       return;
     }
 
-    let currentCheckDate = new Date(mostRecentDay);
+    // Helper to get previous day string in YYYY-MM-DD in UTC (avoids DST/timezone shifts)
+    const getPreviousDayStr = (dateStr) => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const d = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      d.setUTCDate(d.getUTCDate() - 1);
+      const yr = d.getUTCFullYear();
+      const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const da = String(d.getUTCDate()).padStart(2, '0');
+      return `${yr}-${mo}-${da}`;
+    };
+
+    let currentCheckStr = mostRecentDay;
     for (let i = 0; i < studiedDays.length; i++) {
-      const checkStr = currentCheckDate.toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' });
-      if (studiedDays.includes(checkStr)) {
+      if (studiedDays.includes(currentCheckStr)) {
         streak++;
-        currentCheckDate.setDate(currentCheckDate.getDate() - 1);
+        currentCheckStr = getPreviousDayStr(currentCheckStr);
       } else {
         break;
       }
