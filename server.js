@@ -165,17 +165,43 @@ app.get('/api/sessions/streak', async (req, res) => {
       FROM sessions
       ORDER BY day DESC
     `);
+    
+    const studiedDays = result.rows.map(row => {
+      const d = new Date(row.day);
+      return d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' });
+    });
+
     let streak = 0;
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    for (let i = 0; i < result.rows.length; i++) {
-      const day = new Date(result.rows[i].day);
-      const expected = new Date(today);
-      expected.setDate(today.getDate() - i);
-      if (day.toDateString() === expected.toDateString()) {
-        streak++;
-      } else break;
+    if (studiedDays.length === 0) {
+      res.json({ streak });
+      return;
     }
+
+    const now = new Date();
+    const todayStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' });
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayStr = yesterday.toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' });
+
+    const mostRecentDay = studiedDays[0];
+
+    if (mostRecentDay !== todayStr && mostRecentDay !== yesterdayStr) {
+      res.json({ streak: 0 });
+      return;
+    }
+
+    let currentCheckDate = new Date(mostRecentDay);
+    for (let i = 0; i < studiedDays.length; i++) {
+      const checkStr = currentCheckDate.toLocaleDateString('sv-SE', { timeZone: 'Asia/Kolkata' });
+      if (studiedDays.includes(checkStr)) {
+        streak++;
+        currentCheckDate.setDate(currentCheckDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
     res.json({ streak });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
