@@ -132,7 +132,9 @@ async function initDB() {
 app.get('/api/sessions', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM sessions WHERE created_at >= NOW() - INTERVAL '24 hours' ORDER BY created_at DESC`
+      `SELECT * FROM sessions 
+       WHERE DATE(created_at AT TIME ZONE 'Asia/Kolkata') = DATE(NOW() AT TIME ZONE 'Asia/Kolkata') 
+       ORDER BY created_at DESC`
     );
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -143,12 +145,12 @@ app.get('/api/sessions/weekly', async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
-        DATE(created_at AT TIME ZONE 'Asia/Kolkata') AS day,
+        TO_CHAR(created_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD') AS day,
         SUM(mins) AS total_mins,
         COUNT(*) AS session_count
       FROM sessions
       WHERE created_at >= NOW() - INTERVAL '7 days'
-      GROUP BY DATE(created_at AT TIME ZONE 'Asia/Kolkata')
+      GROUP BY TO_CHAR(created_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD')
       ORDER BY day ASC
     `);
     res.json(result.rows);

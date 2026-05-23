@@ -761,8 +761,51 @@ const q=quotes[new Date().getDate()%quotes.length];
 document.getElementById('daily-quote').textContent=q.text;
 document.getElementById('daily-author').textContent='— '+q.author;
 
+// ── AUTO NEW DAY RESET ──
+let lastCheckedDate = '';
+function getTodayLocalDateStr() {
+  const d = new Date();
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const da = String(d.getDate()).padStart(2, '0');
+  return `${yr}-${mo}-${da}`;
+}
+async function checkNewDay() {
+  const today = getTodayLocalDateStr();
+  if (!lastCheckedDate) {
+    lastCheckedDate = today;
+    const savedDate = localStorage.getItem('last_active_date');
+    if (savedDate && savedDate !== today) {
+      console.log('New day detected since last active date. Resetting checklist.');
+      await autoResetChecklist();
+    }
+    localStorage.setItem('last_active_date', today);
+    return;
+  }
+  if (lastCheckedDate !== today) {
+    console.log('Midnight crossed! Resetting checklist for the new day.');
+    lastCheckedDate = today;
+    localStorage.setItem('last_active_date', today);
+    await autoResetChecklist();
+    if (typeof loadSessionCount === 'function') loadSessionCount();
+    if (typeof loadStreak === 'function') loadStreak();
+    if (typeof loadWeeklyGraph === 'function') loadWeeklyGraph();
+    if (typeof loadSubjectBreakdown === 'function') loadSubjectBreakdown();
+    if (typeof loadPlans === 'function') loadPlans();
+  }
+}
+async function autoResetChecklist() {
+  try {
+    await fetch(API + '/checklist/reset', { method: 'POST' });
+    if (typeof loadChecklist === 'function') {
+      await loadChecklist();
+    }
+  } catch(e) {}
+}
+
 // ── CLOCK ──
 function updateClock(){
+  checkNewDay();
   const n=new Date();
   document.getElementById('live-clock').textContent=
     n.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})+
@@ -855,17 +898,21 @@ function drawWeeklyGraph(data){
   const canvas=document.getElementById('weekly-canvas');
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
-  canvas.width=canvas.offsetWidth*dpr;
-  canvas.height=120*dpr;
+  const W=canvas.offsetWidth || (canvas.parentElement ? canvas.parentElement.offsetWidth : 0) || 600;
+  const H=120;
+  canvas.width=W*dpr;
+  canvas.height=H*dpr;
   ctx.scale(dpr,dpr);
-  const W=canvas.offsetWidth, H=120;
   ctx.clearRect(0,0,W,H);
 
-  // Build last 7 days
+  // Build last 7 days in local timezone
   const days=[];
   for(let i=6;i>=0;i--){
     const d=new Date(); d.setDate(d.getDate()-i);
-    days.push({ label:d.toLocaleDateString('en-IN',{weekday:'short'}), date:d.toISOString().split('T')[0], mins:0 });
+    const yr=d.getFullYear();
+    const mo=String(d.getMonth()+1).padStart(2,'0');
+    const da=String(d.getDate()).padStart(2,'0');
+    days.push({ label:d.toLocaleDateString('en-IN',{weekday:'short'}), date:`${yr}-${mo}-${da}`, mins:0 });
   }
   data.forEach(row=>{
     const d=days.find(x=>x.date===row.day);
