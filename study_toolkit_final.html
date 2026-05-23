@@ -837,13 +837,14 @@ const levels=[
   {min:900, max:1500, emoji:'🎓', name:'Graduate'},
   {min:1500,max:99999,emoji:'⭐', name:'Master'},
 ];
-function updateXP(totalMins) {
-  const xp = totalMins; // 1 min studied = 1 XP
+function updateXP(lifetimeMins, todayMins) {
+  const xp = lifetimeMins; // 1 min studied = 1 XP
   const lvl = levels.find(l=>xp>=l.min&&xp<l.max)||levels[levels.length-1];
   const pct = Math.min(100,Math.round(((xp-lvl.min)/(lvl.max-lvl.min))*100));
   document.getElementById('level-emoji').textContent=lvl.emoji;
   document.getElementById('level-name').textContent=lvl.name;
-  document.getElementById('level-xp').textContent=xp+' XP';
+  const todayText = todayMins !== undefined ? ` (${todayMins} XP today)` : '';
+  document.getElementById('level-xp').textContent=xp+' XP'+todayText;
   document.getElementById('level-bar').style.width=pct+'%';
   document.getElementById('total-xp-display').textContent=xp;
   document.getElementById('xp-level-label').textContent=lvl.emoji+' '+lvl.name;
@@ -998,7 +999,11 @@ async function loadSessionCount(){
     renderLog(data);
     const mins=data.reduce((a,s)=>a+s.mins,0);
     updateGoalUI(mins);
-    updateXP(mins); // lifetime XP would need all-time query; today's for simplicity
+    
+    // Fetch lifetime stats for XP calculation
+    const lr=await fetch(API+'/sessions/lifetime');
+    const ld=await lr.json();
+    updateXP(ld.total_mins, mins);
   } catch(e){}
 }
 
@@ -1158,7 +1163,7 @@ function renderLog(data){
   document.getElementById('log-sessions').textContent=data.length;
 }
 async function clearLog(){
-  try{await fetch(API+'/sessions',{method:'DELETE'});sessions=0;document.getElementById('session-count').textContent='0';document.getElementById('session-stars').textContent='';renderLog([]);updateGoalUI(0);updateXP(0);}catch(e){}
+  try{await fetch(API+'/sessions',{method:'DELETE'});sessions=0;document.getElementById('session-count').textContent='0';document.getElementById('session-stars').textContent='';renderLog([]);updateGoalUI(0);updateXP(0,0);}catch(e){}
 }
 
 // ── DEADLINES ──

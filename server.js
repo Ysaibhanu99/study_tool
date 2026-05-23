@@ -213,6 +213,15 @@ app.delete('/api/sessions', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Lifetime sessions stats for XP calculation
+app.get('/api/sessions/lifetime', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT SUM(mins) AS total_mins FROM sessions');
+    const total_mins = parseInt(result.rows[0]?.total_mins) || 0;
+    res.json({ total_mins });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ═══════════════════════════════════════
 // TASKS API
 // ═══════════════════════════════════════
